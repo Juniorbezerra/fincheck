@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,4 +5,72 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum TransactionType {
+  INCOME
+  OUTCOME
+
+  @@map("transaction_type")
+}
+
+enum BanckAccountType {
+  CHEKING
+  IVESTIMENT
+  CASH
+
+  @@map("banck_account_type")
+}
+
+model User {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String
+  email        String        @unique
+  password     String
+  bankAccounts BankAccount[]
+  categories   Category[]
+  transactions Transaction[]
+
+  @@map("users")
+}
+
+model BankAccount {
+  id             String           @id @default(uuid()) @db.Uuid
+  userId         String           @map("user_id") @db.Uuid
+  user           User             @relation(fields: [userId], references: [id])
+  name           String
+  color          String
+  initialBalance Float            @map("initial_balance")
+  type           BanckAccountType
+  transactions   Transaction[]
+
+  @@map("bank_account")
+}
+
+model Category {
+  id           String          @id @default(uuid()) @db.Uuid
+  userId       String          @map("user_id") @db.Uuid
+  user         User            @relation(fields: [userId], references: [id])
+  name         String
+  icon         String
+  type         TransactionType
+  transactions Transaction[]
+
+  @@map("categories")
+}
+
+model Transaction {
+  id            String          @id @default(uuid()) @db.Uuid
+  userId        String          @map("user_id") @db.Uuid
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bankAccountId String          @map("banck_account_id") @db.Uuid
+  banckAccoount BankAccount     @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  categoryId    String?         @map("category_id") @db.Uuid
+  category      Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  name          String
+  value         Float
+  date          DateTime
+  type          TransactionType
+
+  @@map("transactions")
 }
